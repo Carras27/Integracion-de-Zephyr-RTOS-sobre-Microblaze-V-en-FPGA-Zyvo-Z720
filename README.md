@@ -1,0 +1,2 @@
+# Integraci-n-de-Zephyr-RTOS-sobre-Microblaze-V-en-FPGA-Zyvo-Z720-
+Integración y evaluación de Zephyr RTOS sobre un procesador softcore Microblaze V. La arquitectura del procesador se ha diseñado con Xilinx Vivado y se ha desplegado sobre la FPGA Zybo Z7. Tras la integración se llevaron a cabo una serie de experimentos para evaluar su funcionamiento. Estos mismos experimentos se realizaron sobre una ESP32-C6 .
