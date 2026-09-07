@@ -1,0 +1,30 @@
+#
+# Copyright (c) 2024 Advanced Micro Devices, Inc.
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+
+identifier: zybo_z7_mbv
+name: Zybo Z7 Microblaze V
+type: mcu
+simulation: native
+arch: riscv
+toolchain:
+  - zephyr
+ram: 262144
+testing:
+  ignore_tags:
+    - bluetooth
+    - coredump
+    - crypto
+    - jwt
+    - logging
+    - lwm2m
+    - mcumgr
+    - sensor
+    - shell
+    - smf
+    - tinycrypt
+    - xip
+    - zdsp
+vendor: amd

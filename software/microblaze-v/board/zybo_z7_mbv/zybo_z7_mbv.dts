@@ -1,0 +1,139 @@
+// SPDX-License-Identifier: GPL-2.0
+/*
+ * dts file for AMD MicroBlaze V
+ *
+ * (C) Copyright 2024, Advanced Micro Devices, Inc.
+ *
+ * Michal Simek <michal.simek@amd.com>
+ */
+
+/dts-v1/;
+
+#include <zephyr/dt-bindings/gpio/gpio.h>
+#include <mem.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+
+/ {
+	#address-cells = <1>;
+	#size-cells = <1>;
+	model = "AMD MicroBlaze V 32bit";
+	compatible = "qemu,mbv", "amd,mbv";
+
+	cpus: cpus {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		timebase-frequency = <100000000>;
+		cpu_0: cpu@0 {
+			compatible = "amd,mbv32", "riscv";
+			device_type = "cpu";
+			reg = <0>;
+			riscv,isa = "rv32imac_zicsr_zifencei";
+			i-cache-size = <32768>;
+			d-cache-size = <32768>;
+			clock-frequency = <100000000>;
+			cpu0_intc: interrupt-controller {
+				compatible = "riscv,cpu-intc";
+				interrupt-controller;
+				#interrupt-cells = <1>;
+			};
+		};
+	};
+
+	aliases {
+		serial0 = &uart0;
+		led0 = &led0;
+		led1 = &led1;
+		led2 = &led2;
+		led3 = &led3;
+	};
+
+	chosen {
+		bootargs = "";
+		stdout-path = "serial0:115200n8";
+		zephyr,console = &uart0;
+		zephyr,shell-uart = &uart0;
+		zephyr,sram = &ram0;
+	};
+
+	ram0: memory@10000000 {
+		device_type = "memory";
+		compatible = "mmio-sram";
+		reg = <0x10000000 0x10000000>;
+	};
+
+clk100: clock {
+		compatible = "fixed-clock";
+		#clock-cells = <0>;
+		clock-frequency = <100000000>;
+	};
+
+	axi: soc {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "simple-bus";
+		ranges;
+		bootph-all;
+
+		axi_intc: interrupt-controller@41200000 {
+			compatible = "xlnx,xps-intc-1.00.a";
+			reg = <0x41200000 0x1000>;
+			interrupt-controller;
+			interrupt-parent = <&cpu0_intc>;
+			#interrupt-cells = <2>;
+			interrupts-extended = <&cpu0_intc 11>;
+			xlnx,kind-of-intr = <0x0>;
+			xlnx,num-intr-inputs = <1>;
+		};
+
+		xlnx_timer0: timer@41c00000 {
+			compatible = "amd,xps-timer-1.00.a";
+			reg = <0x41c00000 0x1000>;
+			interrupt-parent = <&axi_intc>;
+			interrupts = <0 2>;
+			xlnx,one-timer-only = <0>;
+			clocks = <&clk100>;
+		};
+
+		uart0: serial@e0001000 {
+			compatible = "xlnx,xuartps";
+			reg = <0xe0001000 0x1000>;
+			#interrupt-parent = <&axi_intc>;
+			#interrupts = <1 2>;
+			clock-frequency = <100000000> ;
+			current-speed = <115200>;
+		};
+		
+		gpio0: gpio@40000000 {
+			compatible = "xlnx,xps-gpio-1.00.a";
+			reg = <0x40000000 0x1000>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			xlnx,all-inputs = <0x0>;
+			xlnx,all-outputs = <0x1>;
+			xlnx,dout-default = <0x0>;
+			xlnx,gpio-width = <0x4>;
+			xlnx,is-dual = <0x0>;
+			xlnx,tri-default = <0x0>;
+		};
+	};
+	leds {
+		compatible = "gpio-leds";
+		led0: led_0 {
+			gpios = <&gpio0 0 GPIO_ACTIVE_HIGH>;
+			label = "led0";
+		};
+		led1: led_1 {
+			gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>;
+			label = "led1";
+		};
+		led2: led_2 {
+			gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
+			label = "led2";
+		};
+		led3: led_3 {
+			gpios = <&gpio0 0 GPIO_ACTIVE_HIGH>;
+			label = "led3";
+		};
+	};
+};

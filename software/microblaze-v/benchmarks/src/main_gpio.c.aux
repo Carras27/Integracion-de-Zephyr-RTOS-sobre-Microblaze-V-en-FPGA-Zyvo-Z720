@@ -1,0 +1,79 @@
+#include <zephyr/kernel.h>
+#include <zephyr/drivers/gpio.h>
+
+// --- Comunicación directa con la UART del PS (Zynq-7000) ---
+#define UART_BASE      0xE0001000
+#define UART_FIFO      (UART_BASE + 0x30)
+#define UART_SR        (UART_BASE + 0x2C)
+#define UART_SR_TXFULL (1 << 4)
+
+static void uart_putc(char c)
+{
+    volatile uint32_t *sr   = (volatile uint32_t *)UART_SR;
+    volatile uint32_t *fifo = (volatile uint32_t *)UART_FIFO;
+    while (*sr & UART_SR_TXFULL);
+    *fifo = c;
+}
+
+static void uart_puts(const char *s)
+{
+    while (*s) uart_putc(*s++);
+}
+
+// Función auxiliar para convertir el número de ciclos a texto sin usar un printf pesado
+static void uart_put_uint32(uint32_t val)
+{
+    char buf[12];
+    int i = 10;
+    buf[11] = '\0';
+    
+    if (val == 0) {
+        uart_puts("0");
+        return;
+    }
+    
+    while (val > 0 && i >= 0) {
+        buf[i--] = (val % 10) + '0';
+        val /= 10;
+    }
+    uart_puts(&buf[i + 1]);
+}
+
+// Vinculación con el alias 'test-pin' de tu overlay
+static const struct gpio_dt_spec pin = GPIO_DT_SPEC_GET(DT_ALIAS(test_pin), gpios);
+
+int main(void)
+{
+    uint32_t start_cycles, end_cycles, total_cycles;
+
+    // Verificar que el periférico está listo y configurar como salida
+    if (!device_is_ready(pin.port)) {
+        uart_puts("Error: El periferico GPIO no esta listo.\r\n");
+        return 0;
+    }
+    gpio_pin_configure_dt(&pin, GPIO_OUTPUT_ACTIVE);
+
+    uart_puts("Iniciando Benchmark GPIO (10.000 iteraciones)...\r\n");
+
+    // --- CAPTURA DE TIEMPOS ---
+    start_cycles = k_cycle_get_32();
+
+    for (int i = 0; i < 10000; i++) {
+        gpio_pin_set_dt(&pin, 1);
+        gpio_pin_set_dt(&pin, 0);
+    }
+
+    end_cycles = k_cycle_get_32();
+    // --------------------------
+
+    total_cycles = end_cycles - start_cycles;
+
+    uart_puts("Benchmark finalizado.\r\nCiclos totales: ");
+    uart_put_uint32(total_cycles);
+    uart_puts("\r\n");
+
+    while (1) {
+        k_msleep(1000);
+    }
+    return 0;
+}

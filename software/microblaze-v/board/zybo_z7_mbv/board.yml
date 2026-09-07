@@ -1,0 +1,5 @@
+board:
+  name: zybo_z7_mbv
+  vendor: amd
+  socs:
+  - name: mbv32

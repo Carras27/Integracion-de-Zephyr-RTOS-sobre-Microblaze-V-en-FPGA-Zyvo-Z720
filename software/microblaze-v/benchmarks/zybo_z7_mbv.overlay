@@ -1,0 +1,24 @@
+/ {
+
+        aliases {
+
+                test-pin = &test_gpio_fpga;
+
+        };
+
+
+
+        leds {
+
+                test_gpio_fpga: test_gpio_fpga_node {
+
+                        gpios = <&gpio0 0 GPIO_ACTIVE_HIGH>;
+
+                        label = "Pin de test MicroBlaze";
+
+                };
+
+        };
+
+};
+
